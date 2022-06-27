@@ -104,22 +104,76 @@ namespace MyDemoProject.Services.Zoom
 
             //return View("Error");
         }
-        public ZoomMeeting CreateMeeting(Meeting meeting,string AccessToken,string Id)
+        public ZoomMeeting CreateMeeting(Meeting meeting, string AccessToken, string Id)
         {
-            //var token = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["TokenFilePath"]));
-            //var userDetails = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["UserDetailsPath"]));
-            //var access_token = token["access_token"];
-            //var userId = userDetails["id"];
+            string model;
+            if (meeting.type == 8)
+            {
+                var day = (int)meeting.Date.DayOfWeek+1;
+                var meetingModel = new Meeting
+                {
+                    topic = meeting.topic,
+                    agenda = meeting.agenda,
 
-            var meetingModel = new JObject();
-            meetingModel["topic"] = meeting.Topic;
-            meetingModel["agenda"] = meeting.Agenda;
+                    start_time = meeting.Date.ToString("yyyy-MM-dd") + "T" + meeting.Date.ToString("HH':'mm':'ss"),
+                   // start_time = meeting.Date.ToString("s"),
+                    //start_time = new DateTime().ToString("2022-06-27T18:00:00"),
+                    duration = meeting.duration,
+                   // schedule_for = meeting.schedule_for,
+                    type = meeting.type,
 
-           // meetingModel["start_time"] =meeting.DateOnly.ToString("yyyy-MM-dd") + "T" + meeting.TimeOnly.ToString("HH':'mm':'ss");
-            meetingModel["start_time"] = meeting.Date.ToString("yyyy-MM-dd") + "T" + meeting.Date.ToString("HH':'mm':'ss");
-            meetingModel["duration"] = meeting.Duration;
+                    recurrence = new Recurrence
+                    {
+                        end_date_time = "2022-09-29T09:00:00Z",
+                        type = meeting.recurrence.type,    // 1-Daily 2-Weekly 3-Monthly    
+                        repeat_interval = 1,
+                        weekly_days = $"{day}",
+                        monthly_day = Int16.Parse(meeting.Date.ToString("dd")),
 
-            var model = JsonConvert.SerializeObject(meetingModel);
+
+                        //end_times = meeting.recurrence.end_times,
+                        // monthly_week_day = meeting.recurrence.monthly_week_day,
+                        // monthly_week = meeting.recurrence.monthly_week,
+                        // weekly_days = meeting.recurrence.weekly_days,
+                    }
+                };
+                 model = JsonConvert.SerializeObject(meetingModel);
+            }
+            //if(meeting.type==3)
+            //{
+            //    var meetingModel = new Meeting
+            //    {
+            //        topic = meeting.topic,
+            //        agenda = meeting.agenda,
+            //        //start_time = meeting.Date.ToString("yyyy-MM-dd") + "T" + meeting.Date.ToString("HH':'mm':'ss"),
+            //        start_time = meeting.Date.ToString("s"),
+
+            //        duration = meeting.duration,
+            //        type = meeting.type,
+            //        recurrence = new Recurrence
+            //        {
+            //            //end_times=meeting.recurrence.end_times,
+            //            type= meeting.recurrence.type,
+
+            //        }
+            //    };
+            //    model = JsonConvert.SerializeObject(meetingModel);
+
+            //}
+            else  //fix this if else
+            {
+                var meetingModel = new JObject();
+                meetingModel["topic"] = meeting.topic;
+                meetingModel["agenda"] = meeting.agenda;
+               // meetingModel["start_time"] = meeting.Date.ToString("s");
+
+                meetingModel["start_time"] = meeting.Date.ToString("yyyy-MM-dd") + "T" + meeting.Date.ToString("HH':'mm':'ss");
+                meetingModel["duration"] = meeting.duration;
+                model = JsonConvert.SerializeObject(meetingModel);
+
+            }
+
+
 
             RestClient restClient = new RestClient();
             RestRequest restRequest = new RestRequest();
@@ -127,7 +181,6 @@ namespace MyDemoProject.Services.Zoom
             restRequest.AddHeader("Content-Type", "application/json");
             restRequest.AddHeader("Authorization", string.Format("Bearer {0}", AccessToken));
             restRequest.AddParameter("application/json", model, ParameterType.RequestBody);
-
             restClient.BaseUrl = new Uri(string.Format(_zoom.Value.MeetingUrl, Id));
             var response = restClient.Post(restRequest);
             var responseObj = JsonConvert.DeserializeObject<ZoomMeeting>(response.Content);
@@ -140,57 +193,57 @@ namespace MyDemoProject.Services.Zoom
 
             //return View("Error");
         }
-        public ZoomMeeting Meeting(string identifier, string AccessToken)
-        {
-            //var token = JObject.Parse(ConfigurationManager.AppSettings["TokenFilePath"]);
+        //public ZoomMeeting Meeting(string identifier, string AccessToken)
+        //{
+        //    //var token = JObject.Parse(ConfigurationManager.AppSettings["TokenFilePath"]);
 
-            RestClient restClient = new RestClient();
-            RestRequest restRequest = new RestRequest();
+        //    RestClient restClient = new RestClient();
+        //    RestRequest restRequest = new RestRequest();
 
-            restRequest.AddHeader("Authorization", "Bearer " + AccessToken);
+        //    restRequest.AddHeader("Authorization", "Bearer " + AccessToken);
 
-            restClient.BaseUrl = new Uri($"https://api.zoom.us/v2/meetings/{identifier}");
-            var response = restClient.Get(restRequest);
+        //    restClient.BaseUrl = new Uri($"https://api.zoom.us/v2/meetings/{identifier}");
+        //    var response = restClient.Get(restRequest);
 
-           // if (response.StatusCode == System.Net.HttpStatusCode.OK)
-           // {
-                var zoomMeeting = JObject.Parse(response.Content).ToObject<ZoomMeeting>();
-                zoomMeeting.Start_Time = TimeZoneInfo.ConvertTimeFromUtc(new DateTime(zoomMeeting.Start_Time.Ticks, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-            //var responseObj = JsonConvert.DeserializeObject<ZoomAuthDto>(response.Content);
-            //return responseObj;
-            return zoomMeeting;
-          //  }
+        //   // if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        //   // {
+        //        var zoomMeeting = JObject.Parse(response.Content).ToObject<ZoomMeeting>();
+        //        zoomMeeting.start_time = TimeZoneInfo.ConvertTimeFromUtc(new DateTime(zoomMeeting.start_time.Ticks, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+        //    //var responseObj = JsonConvert.DeserializeObject<ZoomAuthDto>(response.Content);
+        //    //return responseObj;
+        //    return zoomMeeting;
+        //  //  }
 
-           // return View("Error");
-        }
+        //   // return View("Error");
+        //}
 
-        public IEnumerable<ZoomMeeting> AllMeetings(string AccessToken,string userId)
-        {
-            //var token = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["TokenFilePath"]));
-            //var userDetails = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["UserDetailsPath"]));
-           // var access_token = token["access_token"];
-           // var userId = userDetails["id"];
+        //public IEnumerable<ZoomMeeting> AllMeetings(string AccessToken,string userId)
+        //{
+        //    //var token = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["TokenFilePath"]));
+        //    //var userDetails = JObject.Parse(System.IO.File.ReadAllText(ConfigurationManager.AppSettings["UserDetailsPath"]));
+        //   // var access_token = token["access_token"];
+        //   // var userId = userDetails["id"];
 
-            RestClient restClient = new RestClient();
-            RestRequest restRequest = new RestRequest();
-            restRequest.AddHeader("Authorization", "Bearer " + AccessToken);
+        //    RestClient restClient = new RestClient();
+        //    RestRequest restRequest = new RestRequest();
+        //    restRequest.AddHeader("Authorization", "Bearer " + AccessToken);
 
-            restClient.BaseUrl = new Uri($"https://api.zoom.us/v2/users/{userId}/meetings");
-            var response = restClient.Get(restRequest);
+        //    restClient.BaseUrl = new Uri($"https://api.zoom.us/v2/users/{userId}/meetings");
+        //    var response = restClient.Get(restRequest);
 
-            //if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //{
-                var zoomMeetings = JObject.Parse(response.Content)["meetings"].ToObject<IEnumerable<ZoomMeeting>>();
-                foreach (ZoomMeeting meeting in zoomMeetings)
-                {
-                    meeting.Start_Time = TimeZoneInfo.ConvertTimeFromUtc(new DateTime(meeting.Start_Time.Ticks, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-                }
+        //    //if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        //    //{
+        //        var zoomMeetings = JObject.Parse(response.Content)["meetings"].ToObject<IEnumerable<ZoomMeeting>>();
+        //        foreach (ZoomMeeting meeting in zoomMeetings)
+        //        {
+        //            meeting.Start_Time = TimeZoneInfo.ConvertTimeFromUtc(new DateTime(meeting.Start_Time.Ticks, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+        //        }
 
-                return zoomMeetings;
-            //}
+        //        return zoomMeetings;
+        //    //}
 
-           // return View("Error");
-        }
+        //   // return View("Error");
+        //}
 
 
     }
